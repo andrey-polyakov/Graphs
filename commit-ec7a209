@@ -1,0 +1,249 @@
+commit ec7a2096a5fcc888037feb5ccfad10f034c46444
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 16:32:48 2015 -0700
+
+    experimenting
+
+diff --git a/src/main/java/com/ea/graph/BellmanFord.java b/src/main/java/com/ea/graph/BellmanFord.java
+index 6bf8632..d07c5ff 100644
+--- a/src/main/java/com/ea/graph/BellmanFord.java
++++ b/src/main/java/com/ea/graph/BellmanFord.java
+@@ -1,12 +1,13 @@
+ package com.ea.graph;
+ 
+ public class BellmanFord {
+-    private final Integer distances[];
+-    private final Integer mutationMatrix[][];
+-
+-    public BellmanFord(FuelPropertyGraph g) {
+-        distances = new Integer[g.getVerticesAmount()];
+-        mutationMatrix = new Integer[g.getVerticesAmount()][g.getVerticesAmount()];
++    private final int distances[];
++    private final int mutationMatrix[][];
++    private FuelPropertyGraph g;
++    public BellmanFord(FuelPropertyGraph graph) {
++        g = graph;
++        distances = new int[g.getVerticesAmount()];
++        mutationMatrix = new int[g.getVerticesAmount()][g.getVerticesAmount()];
+         for (int s = 0; s < mutationMatrix.length; s++) {
+             for (int d = 0; d < mutationMatrix.length; d++) {
+                 mutationMatrix[s][d] = g.getAdjacency(s, d);
+@@ -14,38 +15,28 @@ public class BellmanFord {
+         }
+     }
+ 
+-    public Integer[] evaluate(int source) {
+-        distances[source] = Integer.valueOf(0);
+-        for (int s = 0; s < mutationMatrix.length; s++) {
+-            for (int d = 0; d < mutationMatrix.length; d++) {
+-                if (s == d) {
+-                    mutationMatrix[s][d] = Integer.valueOf(0);
+-                    continue;
+-                }
+-                if (mutationMatrix[s][d].intValue() == 0) {
+-                    mutationMatrix[s][d] = null;
+-                }
++    public static int INF = 65536;
++    public int[] evaluate(int source) {
++        for (int d = 0; d < mutationMatrix.length; d++) {
++            if (d == source) {
++                distances[d] = INF;
++            } else {
++                distances[d] = 0;
+             }
+         }
+-        for (int s = 0; s < mutationMatrix.length; s++) {// 's' stands for source
+-            for (int d = 0; d < mutationMatrix.length; d++) {// 'd' stands for destination
+-                if (mutationMatrix[s][d] != null) {
+-                    if (distances[d] == null || distances[d].intValue() > distances[s].intValue() + mutationMatrix[s][d].intValue()) {
+-                        if (distances[s] == null) {
+-                            distances[d] = mutationMatrix[s][d];
+-                        } else {
+-                            distances[d] = new Integer(distances[s].intValue() + mutationMatrix[s][d].intValue());
+-                        }
++//        for (int i = 1; i < mutationMatrix.length - 1; i++) {
++            for (int s = 0; s < mutationMatrix.length; s++) {
++                for (int d = 0; d < mutationMatrix.length; d++) {
++                    if (distances[s] != INF && distances[d] > distances[s] + g.getAdjacency(s, d)) {
++                        distances[d] = distances[s] + g.getAdjacency(s, d);
+                     }
+                 }
+             }
+-        }
++//        }
+         for (int s = 0; s < mutationMatrix.length; s++) {
+             for (int d = 0; d < mutationMatrix.length; d++) {
+-                if (mutationMatrix[s][d] != null) {
+-                    if (distances[d].intValue() > distances[s].intValue() + mutationMatrix[s][d].intValue())
+-                        new RuntimeException("The Graph contains negative edge cycle");
+-                }
++                if (distances[d] > distances[s] + mutationMatrix[s][d])
++                    new RuntimeException("The Graph contains negative edge cycle");
+             }
+         }
+         return distances;
+diff --git a/src/main/java/com/ea/graph/Logic.java b/src/main/java/com/ea/graph/Logic.java
+index c0f146a..5bb0638 100644
+--- a/src/main/java/com/ea/graph/Logic.java
++++ b/src/main/java/com/ea/graph/Logic.java
+@@ -2,9 +2,6 @@ package com.ea.graph;
+ 
+ import java.util.*;
+ 
+-/**
+- * Created by ¿Ì‰ÂÈ on 29.07.2015.
+- */
+ public class Logic {
+ 
+     static class Route {
+@@ -40,11 +37,8 @@ public class Logic {
+         public boolean equals(Object o) {
+             if (this == o) return true;
+             if (o == null || getClass() != o.getClass()) return false;
+-
+             Route route = (Route) o;
+-
+             return !(vertex != null ? !vertex.equals(route.vertex) : route.vertex != null);
+-
+         }
+ 
+         @Override
+@@ -63,7 +57,7 @@ public class Logic {
+     }
+ 
+     public long calculateBestRoute(FuelPropertyGraph g, int start, int destination) {
+-        Integer[] distances = new BellmanFord(g).evaluate(start);
++        int[] distances = new BellmanFord(g).evaluate(start);
+         int minimalRoute = distances[destination];
+         if (minimalRoute == 0) {
+             int temp = start;
+@@ -77,11 +71,12 @@ public class Logic {
+             return -1;
+         }
+         Queue<Route> routes = new ArrayDeque();
+-
++        Set<Route> processed = new HashSet<>();
+         int maximumGas = 0;
+         int remainingSteps = minimalRoute - 1;
+         int currentGas = g.getVertex(destination).getFuelAmount();
+-
++        FuelPropertyGraph.Vertex v1 = g.getVertex(start);
++        FuelPropertyGraph.Vertex v2 = g.getVertex(destination);
+         Collection<FuelPropertyGraph.Vertex> neighbours;
+         neighbours = g.getVertex(destination).connectedWith();
+ 
+@@ -95,7 +90,9 @@ public class Logic {
+ 
+         for (FuelPropertyGraph.Vertex v : neighbours) {// initial routes
+             if (distances[v.getVertexIndex()] == remainingSteps) {
+-                routes.add(new Route(v, remainingSteps, currentGas + v.getFuelAmount(), null));
++                Route r = new Route(v, remainingSteps, currentGas + v.getFuelAmount(), null);
++                routes.add(r);
++                processed.add(r);
+             }
+         }
+         while (!routes.isEmpty()) { // while we have options
+@@ -113,7 +110,9 @@ public class Logic {
+                     continue;
+                 }
+                 if (distances[v.getVertexIndex()] == route.getStepsLeft() - 1) {
+-                    routes.add(new Route(v, route.getStepsLeft() - 1, route.getTotalGas() + v.getFuelAmount(), route));
++                    Route r = new Route(v, route.getStepsLeft() - 1, route.getTotalGas() + v.getFuelAmount(), route);
++                    routes.add(r);
++                    processed.add(r);
+                 }
+             }
+         }
+diff --git a/src/test/java/BellmanFordTest.java b/src/test/java/BellmanFordTest.java
+index e5d6166..90a39d8 100644
+--- a/src/test/java/BellmanFordTest.java
++++ b/src/test/java/BellmanFordTest.java
+@@ -19,7 +19,7 @@ public class BellmanFordTest {
+                 {0, 0, 0, 1, 0, 1},
+                 {0, 0, 0, 0, 1, 0}
+         };
+-        Integer expected[] = {0, 1, 1, 2, 3, 4};
++        int expected[] = {0, 1, 1, 2, 3, 4};
+         FuelPropertyGraph g = new FuelPropertyGraph(matrix);
+         BellmanFord bellmanford = new BellmanFord(g);
+         assertArrayEquals(expected, bellmanford.evaluate(0));
+@@ -35,10 +35,10 @@ public class BellmanFordTest {
+                 {0, 0, 0, 1, 0, 0},
+                 {0, 0, 0, 0, 0, 0}
+         };
+-        Integer expected[] = {0, 1, 1, 2, 3, 0};
++        int expected[] = {0, 1, 1, 2, 3, 0};
+         FuelPropertyGraph g = new FuelPropertyGraph(matrix);
+         BellmanFord bellmanford = new BellmanFord(g);
+-        Integer[] distances = bellmanford.evaluate(0);
++        int[] distances = bellmanford.evaluate(0);
+         assertArrayEquals(expected, distances);
+     }
+ 
+@@ -52,10 +52,10 @@ public class BellmanFordTest {
+                 {0, 0, 0, 0, 0, 0},
+                 {0, 0, 0, 0, 0, 0}
+         };
+-        Integer expected[] = {0, 0, 0, 0, 0, 0};
++        int expected[] = {0, 0, 0, 0, 0, 0};
+         FuelPropertyGraph g = new FuelPropertyGraph(matrix);
+         BellmanFord bellmanford = new BellmanFord(g);
+-        Integer[] distances = bellmanford.evaluate(0);
++        int[] distances = bellmanford.evaluate(0);
+         assertArrayEquals(expected, distances);
+     }
+ 
+diff --git a/src/test/java/IntegrationTest.java b/src/test/java/IntegrationTest.java
+new file mode 100644
+index 0000000..d17b442
+--- /dev/null
++++ b/src/test/java/IntegrationTest.java
+@@ -0,0 +1,48 @@
++import com.ea.graph.BellmanFord;
++import com.ea.graph.FuelPropertyGraph;
++import com.ea.graph.GridMapParser;
++import org.junit.Test;
++
++import static junit.framework.TestCase.assertEquals;
++
++/**
++ * Created by –ê–Ω–¥—Ä–µ–π on 31.07.2015.
++ */
++public class IntegrationTest {
++
++    @Test
++    public void allTogether() {
++        GridMapParser gmp = new GridMapParser(10, 10);
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 10");
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 11");
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 12");
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 10");
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 10");
++        gmp.consumeLine("1 2 3 4 5 6 7 8 9 10");
++        gmp.consumeLine("1 2 3 1 5 6 7 8 9 10");
++        gmp.consumeLine("1 2 1 4 5 6 7 8 9 10");
++        gmp.consumeLine("1 1 3 4 5 6 7 8 9 10");
++        gmp.consumeLine("9 2 3 4 5 6 7 8 9 10");
++
++        FuelPropertyGraph g = gmp.getGraph();
++        BellmanFord bellmanford = new BellmanFord(g);
++        int[] distances = bellmanford.evaluate(99);
++        assertEquals(2, distances[97]);
++    }
++
++    @Test
++    public void allTogetherSmall() {
++        GridMapParser gmp = new GridMapParser(5, 5);
++        gmp.consumeLine("9 2 6 4 5");
++        gmp.consumeLine("1 2 6 4 2");
++        gmp.consumeLine("1 2 6 4 5");
++        gmp.consumeLine("4 2 6 8 5");
++        gmp.consumeLine("6 9 3 4 10");
++        FuelPropertyGraph g = gmp.getGraph();
++        BellmanFord bellmanford = new BellmanFord(g);
++        int[] distances = bellmanford.evaluate(24);
++        assertEquals(2, distances[22]);
++    }
++
++
++}

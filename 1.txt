@@ -1,0 +1,53 @@
+commit ec7a2096a5fcc888037feb5ccfad10f034c46444
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 16:32:48 2015 -0700
+
+    experimenting
+
+commit 0fb291949d27a46bf9db50fea2246f758e8455c7
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 04:31:04 2015 -0700
+
+    anyways...
+
+commit a3007260530022469ea012fc3ccb151ff5e86255
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 03:47:48 2015 -0700
+
+    Green line but performance issues
+
+commit 2d99643f56f059618e34f7bebc8629ffa2a08b78
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 03:35:36 2015 -0700
+
+    wrapper
+
+commit 3473c49e90500e0df8de913ce84b00939c8b30bc
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Fri Jul 31 02:08:43 2015 -0700
+
+    Yahoooo! Green line
+
+commit 1a087c0ed199c71bb1fd46af349f5f125c706c52
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Thu Jul 30 23:01:43 2015 -0700
+
+    calculation of the most fruitful route from the shortest ones
+
+commit ec6ecd9bf619b3ecae6c7a504ce5f292e7b78e7f
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Thu Jul 30 19:47:12 2015 -0700
+
+    parser + tests
+
+commit f6ed6d9588b13c81c6567c0831c97061f43e52ec
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Thu Jul 30 13:06:12 2015 -0700
+
+    GridMapParser
+
+commit abdd04ceb6e7f8865cc76b56279153315ea2baf6
+Author: Andrey Polyakov <andrey.polyakov@hiq.se>
+Date:   Thu Jul 30 12:43:42 2015 -0700
+
+    First stable version

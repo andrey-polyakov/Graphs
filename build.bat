@@ -1,0 +1,1 @@
+mvn.bat clean compile assembly:single
